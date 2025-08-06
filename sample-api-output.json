@@ -1,0 +1,51 @@
+{
+  "contractName": "Q4 2024 Vendor Contract",
+  "contractDocument": "vendor_contract_q4_2024.pdf",
+  "emails": [
+    "procurement@company.com",
+    "finance@company.com",
+    "legal@company.com",
+    "vendor@supplier.com"
+  ],
+  "tables": [
+    {
+      "name": "Purchase Orders",
+      "data": [
+        ["Order ID", "Product", "Quantity", "Unit Price", "Total"],
+        ["PO-001", "Laptops", "50", "$1200", "$60000"],
+        ["PO-002", "Monitors", "100", "$300", "$30000"],
+        ["PO-003", "Keyboards", "200", "$50", "$10000"]
+      ],
+      "emailsAssigned": [
+        "procurement@company.com",
+        "finance@company.com"
+      ]
+    },
+    {
+      "name": "Delivery Schedule",
+      "data": [
+        ["Order ID", "Delivery Date", "Status", "Notes"],
+        ["PO-001", "2024-10-15", "Confirmed", "Express delivery"],
+        ["PO-002", "2024-10-20", "Pending", "Standard shipping"],
+        ["PO-003", "2024-10-25", "Confirmed", "Bulk delivery"]
+      ],
+      "emailsAssigned": [
+        "procurement@company.com",
+        "vendor@supplier.com"
+      ]
+    },
+    {
+      "name": "Payment Terms",
+      "data": [
+        ["Invoice #", "Amount", "Due Date", "Payment Method"],
+        ["INV-001", "$60000", "2024-11-15", "Wire Transfer"],
+        ["INV-002", "$30000", "2024-11-20", "Check"],
+        ["INV-003", "$10000", "2024-11-25", "Credit Card"]
+      ],
+      "emailsAssigned": [
+        "finance@company.com",
+        "legal@company.com"
+      ]
+    }
+  ]
+} 
