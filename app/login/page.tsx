@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { Loader2, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
 
 export default function LoginPage() {
@@ -54,70 +54,70 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl border-0 bg-white/95 backdrop-blur-sm">
-        <CardHeader className="text-center pb-8">
-          <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <Mail className="w-6 h-6 text-blue-600" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-xl shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+        <CardHeader className="text-center pb-10">
+          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mb-8 shadow-lg">
+            <Mail className="w-10 h-10 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            Welcome Back
+          <CardTitle className="text-4xl font-bold text-gray-900 mb-3">
+            Sign in to your Account
           </CardTitle>
-          <CardDescription className="text-gray-600">
-            Sign in to access your mail automation dashboard
+          <CardDescription className="text-gray-600 text-lg">
+            Access your mail automation dashboard
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <CardContent className="space-y-8 px-10 pb-10">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
             
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700 font-medium">
+            <div className="space-y-4">
+              <Label htmlFor="email" className="text-gray-700 font-semibold text-base">
                 Email Address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  className="pl-14 pr-4 py-4 border-2 border-gray-200 focus:border-blue-500 focus:ring-0 focus:outline-none focus:ring-offset-0 rounded-lg text-base"
                   required
                 />
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700 font-medium">
+            <div className="space-y-4">
+              <Label htmlFor="password" className="text-gray-700 font-semibold text-base">
                 Password
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  className="pl-14 pr-14 py-4 border-2 border-gray-200 focus:border-blue-500 focus:ring-0 focus:outline-none focus:ring-offset-0 rounded-lg text-base"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
+                    <EyeOff className="w-6 h-6" />
                   ) : (
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-6 h-6" />
                   )}
                 </button>
               </div>
@@ -126,27 +126,21 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isLoading || !email || !password}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-8 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-6 h-6 mr-3 animate-spin" />
                   Signing in...
                 </>
               ) : (
-                "Sign In"
+                <>
+                  Sign In
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </>
               )}
             </Button>
           </form>
-          
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-                Contact administrator
-              </a>
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
