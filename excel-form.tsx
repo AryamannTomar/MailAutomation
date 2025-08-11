@@ -685,7 +685,7 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
         }
       }
 
-      const response = await fetch('https://gep1.app.n8n.cloud/webhook/send-form-data', {
+      const response = await fetch('https://gep1.app.n8n.cloud/webhook-test/send-form-data', {
         method: 'POST',
         body: formDataToSend, // Send FormData instead of JSON
       })
