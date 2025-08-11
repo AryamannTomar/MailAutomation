@@ -52,7 +52,8 @@ export default function ChangePasswordDialog({ isOpen, onClose }: ChangePassword
       console.log('Change password - token:', token)
              console.log('Change password - payload:', {
          email: user?.email,
-         password: newPassword,
+         currPassword: currentPassword,
+         newPassword: newPassword,
        })
        
        const response = await fetch('https://gep1.app.n8n.cloud/webhook/MA-change-password', {
@@ -63,7 +64,8 @@ export default function ChangePasswordDialog({ isOpen, onClose }: ChangePassword
          },
          body: JSON.stringify({
            email: user?.email,
-           password: newPassword,
+           currPassword: currentPassword,
+           newPassword: newPassword,
          }),
        })
 

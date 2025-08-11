@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const { login, user } = useAuth()
+  const { login, user, clearError } = useAuth()
   const router = useRouter()
 
   // Redirect if already logged in
@@ -46,7 +46,7 @@ export default function LoginPage() {
         setError('Invalid email or password. Please check your credentials.')
       }
     } catch (error) {
-      console.error('Login form error:', error)
+      // console.error('Login form error:', error)
       setError('Network error. Please check your connection and try again.')
     } finally {
       setIsLoading(false)

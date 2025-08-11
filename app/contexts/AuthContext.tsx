@@ -10,9 +10,10 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<boolean>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   isLoading: boolean
+  clearError: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('Attempting login with:', { email, password })
       
@@ -93,11 +95,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (parseError) {
           errorData = { message: 'Failed to parse error response' }
         }
-        console.error('Login failed:', errorData)
+        // console.error('Login failed:', errorData)
         return false
       }
     } catch (error) {
-      console.error('Login error:', error)
+      // console.error('Login error:', error)
       return false
     }
   }
