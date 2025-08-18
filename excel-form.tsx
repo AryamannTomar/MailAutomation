@@ -67,7 +67,7 @@ export default function Component() {
   }
 
   const [formData, setFormData] = useState({
-    contractName: "",
+    subject: "",
     contractDocument: null as File | null,
   })
 
@@ -388,7 +388,11 @@ export default function Component() {
 
   const parseTableData = (data: string) => {
     if (!data.trim()) return []
-    const lines = data.trim().split("\n")
+    
+    // Clean up double tabs before parsing
+    const cleanedData = data.replace(/\t\t/g, '\t')
+    
+    const lines = cleanedData.trim().split("\n")
     return lines.map((line) => line.split("\t").map((cell) => cell.trim()))
   }
 
@@ -456,8 +460,23 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
     let finalRawData: string
     
     if (table.viewMode === 'vertical') {
-      // Convert vertical textarea input back to horizontal format for storage
-      finalRawData = convertToHorizontalFormat(value)
+      // Handle edge case when textarea is empty or contains only whitespace
+      if (!value.trim()) {
+        // If completely empty, just use the original headers
+        finalRawData = selectedStructure ? selectedStructure.columns.join('\t') : ''
+      } else {
+        // In vertical mode, the value should already be in vertical format (from the textarea)
+        // We need to convert it back to horizontal format for storage
+        const lines = value.trim().split('\n')
+        if (lines.length > 0) {
+          // Convert vertical format back to horizontal format for storage
+          const verticalData = lines.map(line => line.split('\t'))
+          const horizontalData = transposeData(verticalData)
+          finalRawData = horizontalData.map(row => row.join('\t')).join('\n')
+        } else {
+          finalRawData = ''
+        }
+      }
     } else {
       // Horizontal mode - store as-is
       finalRawData = value
@@ -474,10 +493,12 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
       if (lines.length > 0) {
         const firstLine = lines[0].trim()
         if (firstLine !== originalHeaders) {
-          // Replace the first line with the original headers
-          lines[0] = originalHeaders
-          finalRawData = lines.join('\n')
+          // Add headers as the first line, preserving all existing data
+          finalRawData = originalHeaders + '\n' + finalRawData
         }
+      } else {
+        // If no lines (all data was cleared), just add headers
+        finalRawData = originalHeaders
       }
     }
     
@@ -493,54 +514,7 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
     )))
   }
 
-  const handleTextareaKeyDown = (tableIndex: number, e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    const textarea = e.currentTarget
-    const cursorPosition = textarea.selectionStart
-    const value = textarea.value
-    const table = tables[tableIndex]
-    
-    // Check for double spacebar (two consecutive spaces)
-    if (e.key === ' ' && e.repeat === false) {
-      // Get the character before the cursor
-      const charBeforeCursor = value[cursorPosition - 1]
-      
-      if (charBeforeCursor === ' ') {
-        // Double space detected - replace with tab
-        e.preventDefault()
-        
-        // Replace the two spaces with a tab character
-        const newValue = value.slice(0, cursorPosition - 1) + '\t' + value.slice(cursorPosition)
-        
-        // Update the table data based on view mode
-        let finalRawData: string
-        if (table.viewMode === 'vertical') {
-          // In vertical mode, convert the vertical input back to horizontal format
-          finalRawData = convertToHorizontalFormat(newValue)
-      } else {
-          // In horizontal mode, use the value directly
-          finalRawData = newValue
-}
 
-        // Update the table
-        const parsedData = parseTableData(finalRawData)
-        const displayData = getDisplayData(finalRawData, table.viewMode)
-        const textareaData = table.viewMode === 'vertical' ? convertToVerticalFormat(finalRawData) : finalRawData
-        
-        setTables(tables.map((t, index) => (index === tableIndex ? { 
-          ...t, 
-          rawData: finalRawData, 
-          textareaData, 
-          parsedData, 
-          displayData 
-        } : t)))
-        
-        // Set cursor position after the tab
-        setTimeout(() => {
-          textarea.setSelectionRange(cursorPosition, cursorPosition)
-        }, 0)
-      }
-    }
-  }
 
   const handleViewModeChange = (tableIndex: number, newViewMode: 'horizontal' | 'vertical') => {
     setTables(tables.map((table, index) => {
@@ -579,12 +553,12 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
   // Check if form can be submitted
   const canSubmit = () => {
     console.log("=== VALIDATION CHECK ===")
-    console.log("Contract Name:", formData.contractName, "Empty:", !formData.contractName.trim())
+    console.log("Subject:", formData.subject, "Empty:", !formData.subject.trim())
     console.log("Contract Document:", formData.contractDocument, "Exists:", !!formData.contractDocument)
     
-    // Check contract name
-    if (!formData.contractName.trim()) {
-      console.log("❌ Contract name is empty")
+    // Check subject
+    if (!formData.subject.trim()) {
+      console.log("❌ Subject is empty")
       return false
     }
     
@@ -614,9 +588,9 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
       // Create FormData to handle file upload
       const formDataToSend = new FormData()
       
-      // Add contract name
-      formDataToSend.append('contractName', formData.contractName)
-      // console.log("Contract Name:", formData.contractName)
+      // Add subject
+      formDataToSend.append('subject', formData.subject)
+      // console.log("Subject:", formData.subject)
       
       // Add PDF file if selected
       if (formData.contractDocument) {
@@ -685,7 +659,7 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
         }
       }
 
-      const response = await fetch('https://gep1.app.n8n.cloud/webhook-test/send-form-data', {
+      const response = await fetch('https://gep1.app.n8n.cloud/webhook/send-form-data', {
         method: 'POST',
         body: formDataToSend, // Send FormData instead of JSON
       })
@@ -746,15 +720,15 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
                 </CardHeader>
                 <CardContent className="pt-4 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="contractName" className="text-blue-800 font-medium">
-                      Contract Name *
+                    <Label htmlFor="subject" className="text-blue-800 font-medium">
+                      Subject *
                     </Label>
                     <Input
-                      id="contractName"
+                      id="subject"
                       type="text"
-                      placeholder="Enter contract name"
-                      value={formData.contractName}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, contractName: e.target.value }))}
+                      placeholder="Enter subject"
+                      value={formData.subject}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
                       required
                       className="border-2 border-blue-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus-visible:ring-blue-600/20 focus-visible:border-blue-600 focus-visible:outline-none bg-white autofill:bg-white"
                     />
@@ -979,21 +953,136 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
                               <div className="space-y-3">
                                 <Label className="text-blue-800 font-medium">
                                   Paste Excel Data
-                                  {table.viewMode === 'horizontal' && (
-                                    <Badge variant="secondary" className="ml-2 bg-green-200 text-green-800 text-xs">
-                                      Double space for tab
-                                    </Badge>
-                                  )}
                                 </Label>
                                 <div className="relative">
-                                  <Textarea
-                                    placeholder="Copy and paste your Excel data here... (Double space to add tab separator)"
-                                    value={table.textareaData}
-                                    onChange={(e) => handleTableDataChange(tableIndex, e.target.value)}
-                                    onKeyDown={(e) => handleTextareaKeyDown(tableIndex, e)}
-                                    className="min-h-[300px] font-mono text-sm resize-none border-2 border-blue-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus-visible:ring-blue-600/20 focus-visible:border-blue-600 focus-visible:outline-none bg-blue-50/20"
-                                  />
-                                </div>
+                                   <Textarea
+                                     placeholder={table.viewMode === 'horizontal' ? "Paste Excel data here first (headers protected, editing allowed after paste)" : "Paste Excel data here (preserves structure)"}
+                                     value={table.textareaData}
+                                                                           onChange={table.viewMode === 'horizontal' ? (e) => {
+                                        // In horizontal mode, only allow editing after data has been pasted
+                                        const newValue = e.target.value
+                                        const selectedStructure = predefinedTableStructures.find(s => s.name === table.originalStructureName)
+                                        
+                                        // Check if this is initial state (only headers or empty)
+                                        const isInitialState = !table.rawData.trim() || 
+                                          (selectedStructure && table.rawData === selectedStructure.columns.join('\t'))
+                                        
+                                        if (isInitialState) {
+                                          // Only allow paste operations, not manual editing
+                                          // Check if this looks like a paste operation (multiple lines or significant content)
+                                          const lines = newValue.trim().split('\n')
+                                          const isPasteOperation = lines.length > 1 || newValue.length > 50
+                                          
+                                          if (!isPasteOperation) {
+                                            // Prevent manual editing in initial state
+                                            return
+                                          }
+                                        }
+                                        
+                                        if (selectedStructure) {
+                                          const lines = newValue.trim().split('\n')
+                                          const originalHeaders = selectedStructure.columns.join('\t')
+                                          
+                                          // Check if this is a case where all data was cleared (only headers remain)
+                                          const isAllDataCleared = lines.length === 1 && lines[0].trim() === originalHeaders
+                                          
+                                          // Check if this is a case where everything is empty (including headers)
+                                          const isCompletelyEmpty = !newValue.trim()
+                                          
+                                          // Check if the header row is being modified (but not in clear operations)
+                                          const isHeaderRowModified = !isAllDataCleared && !isCompletelyEmpty && 
+                                            lines.length > 0 && lines[0].trim() !== originalHeaders
+                                          
+                                          if (isHeaderRowModified) {
+                                            // If header row is being modified and it's not a clear operation, prevent the change
+                                            e.preventDefault()
+                                            return
+                                          }
+                                          
+                                          // If completely empty, restore headers
+                                          if (isCompletelyEmpty) {
+                                            const restoredValue = originalHeaders + '\n'
+                                            handleTableDataChange(tableIndex, restoredValue)
+                                            return
+                                          }
+                                        }
+                                        
+                                        // Allow the change if header row is preserved or it's a clear operation
+                                        handleTableDataChange(tableIndex, newValue)
+                                      } : (e) => {
+                                        // In vertical mode, allow editing but protect first column (headers)
+                                        const newValue = e.target.value
+                                        const selectedStructure = predefinedTableStructures.find(s => s.name === table.originalStructureName)
+                                        
+                                        if (selectedStructure) {
+                                          const lines = newValue.trim().split('\n')
+                                          const originalHeaders = selectedStructure.columns
+                                          
+                                          // Check if this is a case where all data was cleared (only headers remain)
+                                          const isAllDataCleared = lines.length === originalHeaders.length && 
+                                            lines.every((line, index) => {
+                                              const cells = line.split('\t')
+                                              // First cell should be the header, rest should be empty
+                                              return cells[0] === originalHeaders[index] && 
+                                                     cells.slice(1).every(cell => cell.trim() === '')
+                                            })
+                                          
+                                          // Check if this is a case where everything is empty (including headers)
+                                          const isCompletelyEmpty = !newValue.trim()
+                                          
+                                          // Check if the first column (headers) is being modified (but not in clear operations)
+                                          const isFirstColumnModified = !isAllDataCleared && !isCompletelyEmpty && 
+                                            lines.some((line, index) => {
+                                              const cells = line.split('\t')
+                                              return cells[0] !== originalHeaders[index]
+                                            })
+                                          
+                                          if (isFirstColumnModified) {
+                                            // If first column is being modified and it's not a clear operation, prevent the change
+                                            e.preventDefault()
+                                            return
+                                          }
+                                        }
+                                        
+                                        // Allow the change if first column is preserved or it's a clear operation
+                                        handleTableDataChange(tableIndex, newValue)
+                                      }}
+                                     onKeyDown={table.viewMode === 'horizontal' ? (e) => {
+                                        // In horizontal mode, prevent all key inputs until data is pasted
+                                        // Only allow paste operation initially
+                                        if (table.rawData.trim() === '' || table.rawData === table.originalStructureName?.split('\t').join('\t')) {
+                                          // If no data pasted yet, only allow paste operation
+                                          if (e.key !== 'Tab' && e.key !== 'Enter') {
+                                            e.preventDefault()
+                                          }
+                                        } else {
+                                          // If data exists, prevent adding new rows and tab navigation
+                                          if (e.key === 'Tab' || e.key === 'Enter') {
+                                            e.preventDefault()
+                                          }
+                                        }
+                                      } : (e) => {
+                                        // In vertical mode, allow all key inputs for editing individual cells
+                                        // Only block tab key to prevent navigation
+                                        if (e.key === 'Tab') {
+                                          e.preventDefault()
+                                        }
+                                        // Allow all other keys for editing
+                                      }}
+                                     onPaste={(e) => {
+                                       e.preventDefault()
+                                       const pastedText = e.clipboardData.getData('text')
+                                       
+                                       // Paste data as-is, preserving the original structure
+                                       handleTableDataChange(tableIndex, pastedText)
+                                     }}
+                                     className={`min-h-[300px] font-mono text-sm resize-none border-2 border-blue-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus-visible:ring-blue-600/20 focus-visible:border-blue-600 focus-visible:outline-none ${
+                                       table.viewMode === 'horizontal' 
+                                         ? 'bg-blue-50/20' 
+                                         : 'bg-blue-50/20'
+                                     }`}
+                                   />
+                                 </div>
                               </div>
 
                               {/* Preview Section */}
@@ -1016,7 +1105,7 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
                                       <Table>
                                         <TableBody>
                                           {table.displayData.map((row, rowIndex) => (
-                                            <TableRow key={rowIndex} className="hover:bg-blue-50 border-b border-blue-100">
+                                            <TableRow key={rowIndex} className="border-b border-blue-100">
                                               {row.map((cell, cellIndex) => (
                                                 <TableCell
                                                   key={cellIndex}
@@ -1032,7 +1121,7 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
                                         </TableBody>
                                       </Table>
                                     ) : (
-                                      // Horizontal View with first row as headers
+                                      // Horizontal View with first row as headers (Read-only)
                                       <Table>
                                         <TableHeader>
                                           <TableRow className="bg-blue-100">
@@ -1048,7 +1137,7 @@ const getSubmissionData = (rawData: string, viewMode: 'horizontal' | 'vertical')
                                         </TableHeader>
                                         <TableBody>
                                           {table.displayData.slice(1).map((row, rowIndex) => (
-                                            <TableRow key={rowIndex} className="hover:bg-blue-50 border-b border-blue-100">
+                                            <TableRow key={rowIndex} className="border-b border-blue-100">
                                               {row.map((cell, cellIndex) => (
                                                 <TableCell
                                                   key={cellIndex}
